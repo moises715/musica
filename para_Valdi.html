@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Quieres salir conmigo?</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .image-container img {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .buttons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+            position: relative; /* Necesario para posicionar el botón flotante encima */
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        #btnSi {
+            background-color: #22c55e;
+            color: white;
+            z-index: 10;
+        }
+
+        #btnSi:hover {
+            background-color: #16a34a;
+        }
+
+        #btnNo {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        #btnNo:hover {
+            background-color: #dc2626;
+        }
+
+        /* Estilo inicial del botón de música sobrepuesto entre los botones */
+        #musicBtn {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #030303;
+            color: white;
+            padding: 8px 75px;
+            font-size: 0.95rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(3, 226, 129, 0.4);
+            z-index: 100;
+            cursor: pointer;
+            transition: all 0.6s ease;
+            text-align: center;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+        #musicBtn:hover {
+            background-color: #0aca2a;
+        }
+
+        /* Clase que se activa al hacer clic para moverse a la esquina superior derecha */
+        #musicBtn.moved {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: auto;
+            transform: none;
+            z-index: 9999;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <div class="image-container">
+            <img id="catImage" src="https://media.giphy.com/media/12Bpme5pTzGmg8/giphy.gif" alt="Gatito tierno con flores">
+        </div>
+        
+        <h1 id="questionTitle">¿Me Aceptas una Cita ?</h1>
+        
+        <div class="buttons" id="buttonGroup">
+            <!-- Botón flotante sobrepuesto encima de los botones Sí y No -->
+            <button id="musicBtn" onclick="toggleMusic()">🎵 Clic Aqui Valdi</button>
+            <button id="btnSi" onclick="aceptar()">Sí</button>
+            <button id="btnNo" onclick="rechazar()">No</button>
+        </div>
+    </div>
+
+    <script>
+        // Objeto de audio independiente para que la música no se corte
+        const bgMusic = new Audio('https://raw.githubusercontent.com/moises715/musica/main/scotty_sire_sad_song.m4a');
+        bgMusic.loop = true;
+        let isMusicPlaying = false;
+        let musicMoved = false;
+
+        function toggleMusic() {
+            const musicBtn = document.getElementById('musicBtn');
+
+            if (!musicMoved) {
+                musicBtn.classList.add('moved');
+                musicMoved = true;
+            }
+
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                musicBtn.innerText = "▶️ Reproducir Música";
+                isMusicPlaying = false;
+            } else {
+                bgMusic.play().then(() => {
+                    musicBtn.innerText = "⏸️ Pausar Música";
+                    isMusicPlaying = true;
+                }).catch(err => {
+                    console.log("Reproducción bloqueada por el navegador", err);
+                });
+            }
+        }
+
+        const frasesNo = [
+            "Se que quieres , Di que sii 🥺 ",
+            "¿Seguro que no quieres salir?",
+            "¿Ni una escapadia ?",
+            "¿Ni una salida al cine?",
+            "¿Ni a tomar Tapioca juntos?",
+            "¿Ni a caminar bajo la luna?",
+            "¿Ni a ver las estrellas?",
+            "¿Y a compartir un helado?",
+            "¿Y a compartir una Pizza?",
+            ".¿Y a compartir un dulce?",
+            "¿De veras no quieres salir?",
+            "...¡Di que sí por favor! 🥺"
+        ];
+
+        const imagenesTristes = [
+            "https://i.pinimg.com/736x/a8/f6/27/a8f6275b8e2fa68c929aafd02c102d12.jpg",
+            "https://i.pinimg.com/736x/f0/8b/3b/f08b3b065efd0a6cc0f660099f864e17.jpg",
+            "https://i.pinimg.com/736x/28/77/c0/2877c037ed4d678dc0b1fe703fb38062.jpg"
+        ];
+
+        let clickCount = 0;
+        let currentScale = 1;
+
+        function rechazar() {
+            const btnNo = document.getElementById('btnNo');
+            const btnSi = document.getElementById('btnSi');
+            const catImage = document.getElementById('catImage');
+
+            if (clickCount < frasesNo.length) {
+                btnNo.innerText = frasesNo[clickCount];
+                
+            } else {
+                
+                btnNo.innerText = "....¡Di que sí Ñaaaaaaaaa! 🥺";
+            }
+
+            const imgIndex = clickCount % imagenesTristes.length;
+            catImage.src = imagenesTristes[imgIndex];
+
+            currentScale += 0.15;
+            btnSi.style.transform = `scale(${currentScale})`;
+
+            clickCount++;
+        }
+
+        function aceptar() {
+            // Cambiar los estilos del body para la lluvia de texto en pantalla completa
+            document.body.style.margin = "0";
+            document.body.style.overflow = "hidden";
+            document.body.style.backgroundColor = "black";
+            document.body.style.display = "block";
+            document.body.style.minHeight = "100vh";
+
+            // Reemplazar el contenido manteniendo el canvas y el botón de música en la esquina
+            document.body.innerHTML = `
+                <canvas id="canvas"></canvas>
+                <button id="musicBtn" class="moved" onclick="toggleMusic()">${isMusicPlaying ? "⏸️ Pausar Música" : "▶️ Reproducir Música"}</button>
+            `;
+
+            // Lógica de la lluvia de "Ñiee"
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const phrase = "Ñiee";
+            const fontSize = 16;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = Array(columns).fill(1);
+
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#ff69b4"; // Rosa fuerte (HotPink)
+                ctx.font = fontSize + "px Arial";
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = phrase;
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+
+                    drops[i]++;
+                }
+            }
+
+            setInterval(draw, 100);
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+            alert("te parece el Lunes a las 13:00 o (CONFIRMAME QUE DIA PODRAS) ");
+            
+        }
+    </script>
+</body>
+</html>
+
+
